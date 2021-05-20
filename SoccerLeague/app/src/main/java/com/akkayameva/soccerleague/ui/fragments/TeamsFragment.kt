@@ -5,23 +5,32 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.List
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.findNavController
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieAnimationSpec
 
 import com.akkayameva.soccerleague.R
 import com.akkayameva.soccerleague.data.db.Team
@@ -52,7 +61,9 @@ class TeamsFragment : Fragment() {
                 SoccerLeagueTheme {
                     // A surface container using the 'background' color from the theme
                     Surface(color = MaterialTheme.colors.background) {
-                        Scaffold(topBar = { },
+                        Scaffold(topBar = {
+
+                        },
                             //floatingActionButtonPosition = FabPosition.End,
                             floatingActionButton = {
                                 FixtureButton {
@@ -99,54 +110,74 @@ class TeamsFragment : Fragment() {
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
     fun ListTeams(resultModel: ApiResultUIModel<List<Team>?>) {
-        resultModel.showSuccess.consume()?.let { result ->
-            when (result) {
-                is Result.Error -> {
+         if (!resultModel.showSuccess.consumed) {
 
-                }
-                is Result.Success -> {
-                    val listTeams = result.data ?: mutableListOf()
-                    LazyColumn(Modifier.fillMaxWidth()) {
+            resultModel.showSuccess.consume()?.let { result ->
+                when (result) {
+                    is Result.Error -> {
 
-                        val listTeamsSorted = listTeams.sortedBy {
-                            it.team_name
-                        }
+                    }
+                    is Result.Success -> {
+                        val listTeams = result.data ?: mutableListOf()
+                        LazyColumn(Modifier.fillMaxWidth()) {
 
-                        val grouped = listTeamsSorted.groupBy {
-                            it.team_name?.first()
-                        }
-                        grouped.keys.forEach { key ->
-                            val initial = key
-                            val teams = grouped[key]?.toList() ?: mutableListOf()
-                            stickyHeader {
-                                CharacterHeader(char = initial!!)
+                            val listTeamsSorted = listTeams.sortedBy {
+                                it.team_name
                             }
-                            items(teams) { team ->
-                                Card(
-                                    shape = MaterialTheme.shapes.small,
-                                    modifier = Modifier
-                                        .padding(bottom = 6.dp, top = 6.dp)
-                                        .fillMaxWidth(),
-                                    elevation = 8.dp
-                                ) {
-                                    Text(
-                                        text = team.team_name!!,
-                                        modifier = Modifier.padding(all = 6.dp)
-                                    )
+
+                            val grouped = listTeamsSorted.groupBy {
+                                it.team_name?.first()
+                            }
+                            grouped.keys.forEach { key ->
+                                val initial = key
+                                val teams = grouped[key]?.toList() ?: mutableListOf()
+                                stickyHeader {
+                                    CharacterHeader(char = initial!!)
                                 }
-                            }
+                                items(teams) { team ->
+                                    Card(
+                                        shape = RoundedCornerShape(3.dp),
+                                        modifier = Modifier
+                                            .padding(bottom = 6.dp, top = 6.dp)
+                                            .fillMaxWidth(),
+                                    ) {
+                                        Row {
+                                            Card(
+                                                modifier = Modifier.size(48.dp),
+                                                shape = CircleShape,
+                                                elevation = 2.dp
+                                            ) {
+                                                Image(
+                                                    painterResource(R.drawable.ic_teams),
+                                                    contentDescription = "",
+                                                    contentScale = ContentScale.Crop,
+                                                    modifier = Modifier.fillMaxSize()
+                                                )
+                                            }
+                                            Spacer(modifier = Modifier.height(6.dp))
+                                            Text(
+                                                text = team.team_name!!,
+                                                modifier = Modifier.padding(all = 6.dp),
+                                                color = MaterialTheme.colors.secondary
+                                            )
+                                        }
+                                    }
+                                }
 
+                            }
                         }
                     }
                 }
+
             }
 
         }
+
     }
 
     @Composable
     fun CharacterHeader(char: Char) {
-        Card(backgroundColor = Color.Black) {
+        Card(backgroundColor = MaterialTheme.colors.primary) {
             Text(
                 text = char.toString(),
                 modifier = Modifier
@@ -159,7 +190,7 @@ class TeamsFragment : Fragment() {
     @Composable
     fun FixtureButton(onClick: () -> Unit) {
         ExtendedFloatingActionButton(
-            icon = { Icon(Icons.Filled.Favorite, "") },
+            icon = { Icon(Icons.Filled.List, "") },
             text = { Text(text = "Draw Fixture") },
             onClick = {
                 onClick()
@@ -169,6 +200,7 @@ class TeamsFragment : Fragment() {
 
     }
 
+
     @Preview(showBackground = true)
     @Composable
     fun DefaultPreview() {
@@ -177,5 +209,3 @@ class TeamsFragment : Fragment() {
         }
     }
 }
-
-
