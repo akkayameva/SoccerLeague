@@ -1,53 +1,54 @@
 package com.akkayameva.soccerleague.ui.fragments
 
-import   android.os.Bundle
+import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.Card
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Done
+import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.AlignmentLine
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
-
+import androidx.lifecycle.lifecycleScope
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieAnimationSpec
+import com.akkayameva.soccerleague.R
 import com.akkayameva.soccerleague.data.db.Fixture
+import com.akkayameva.soccerleague.ui.base.ApiResultUIModel
+import com.akkayameva.soccerleague.ui.base.Result
 import com.akkayameva.soccerleague.ui.theme.SoccerLeagueTheme
+
 import com.akkayameva.soccerleague.ui.viewmodel.MatchData
 import com.akkayameva.soccerleague.ui.viewmodel.SoccerViewModel
-import com.akkayameva.soccerleague.ui.base.Result
-
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
+import com.google.accompanist.pager.pagerTabIndicatorOffset
 import com.google.accompanist.pager.rememberPagerState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
-
 class FixtureFragment : Fragment() {
 
     val viewModel: SoccerViewModel by sharedViewModel()
-
-    companion object {
-        private val ARG_PAGE: String = "arg_page"
-        fun newInstance(page: Int): FixtureFragment {
-            val args = Bundle()
-            args.putInt(ARG_PAGE, page)
-            val fragment = FixtureFragment()
-            fragment.arguments = args
-            return fragment
-        }
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -61,6 +62,12 @@ class FixtureFragment : Fragment() {
                     // A surface container using the 'background' color from the theme
                     Surface(color = MaterialTheme.colors.background) {
                         CalculateFixture()
+                        lifecycleScope.launch(Dispatchers.IO) {
+                            delay(1000)
+                            withContext(Dispatchers.Main) {
+                                viewModel.showProgressLiveData.postValue(false)
+                            }
+                        }
                     }
                 }
             }
@@ -69,42 +76,89 @@ class FixtureFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        viewModel.getFixture(viewModel.listTeams.size)
-//        val roundCount = viewModel.listTeams.size - 1
-//        viewModel.calculateFixForSingle(rounds_count = roundCount, listTeams = viewModel.listTeams)
-
         val listTeamsNames = mutableListOf<String>()
         viewModel.listTeams.forEach {
             listTeamsNames.add(it.team_name!!)
         }
-        viewModel.listMatches(listTeamsParam = listTeamsNames)
+        viewModel.listMatchesForTwoRounds()
     }
 
     @Composable
     fun CalculateFixture() {
-        ListFixture()
+
+            ListFixture()
+
     }
 
     @OptIn(ExperimentalPagerApi::class)
     @Composable
-    fun FixturePager(listFixture: List<Fixture>) {
+    fun FixturePager() {
 
         val pagerState = rememberPagerState(pageCount = viewModel.matchesMap.keys.size)
-
-        HorizontalPager(state = pagerState) { pagerIndex ->
-
-            val matchesData = viewModel.matchesMap[pagerIndex]!!
-
-            Column {
-                Text("Week ${pagerIndex + 1}")
-                if (pagerIndex < viewModel.listPassingTeams.size) {
-                    Text("Passing Team:  ${viewModel.listPassingTeams[pagerIndex]}")
+        Column {
+            ScrollableTabRow(
+                // Our selected tab is our current page
+                selectedTabIndex = pagerState.currentPage,
+                // Override the indicator, using the provided pagerTabIndicatorOffset modifier
+                indicator = { tabPositions ->
+                    TabRowDefaults.Indicator(
+                        Modifier.pagerTabIndicatorOffset(pagerState, tabPositions)
+                    )
+                },
+            ) {
+                // Add tabs for all of our pages
+                viewModel.matchesMap.keys.forEachIndexed { index, key ->
+                    Tab(
+                        text = {
+                            Text(
+                                "Week ${index + 1}",
+                                color = Color.Black
+                            )
+                        },
+                        selected = pagerState.currentPage == index,
+                        onClick = {
+                            lifecycleScope.launch(Dispatchers.Main) {
+                                pagerState.scrollToPage(page = index)
+                            }
+                        },
+                    )
                 }
-                LazyColumn(Modifier.fillMaxWidth()) {
-                    items(matchesData.toTypedArray()) { match ->
-                        Match(teamData = match)
+            }
+
+            HorizontalPager(state = pagerState, Modifier.padding(all = 5.dp)) { pagerIndex ->
+
+                val matchesData = viewModel.matchesMap[pagerIndex]!!
+                Column(Modifier.fillMaxSize()) {
+                    LazyColumn(Modifier.weight(1f)) {
+                        items(matchesData.listMatches?.toTypedArray()!!) { match ->
+                            Match(teamData = match)
+                        }
                     }
+                    PassingTeam("Passing Team:  ${matchesData.passingTeam}")
                 }
+            }
+        }
+
+    }
+
+    @Composable
+    fun PassingTeam(teamName: String) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Card(
+                backgroundColor = Color.Red,
+                shape = RoundedCornerShape(10.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = teamName,
+                    style = MaterialTheme.typography.body1,
+                    modifier =
+                    Modifier
+                        .padding(
+                            all = 30.dp
+                        ),
+                    color = MaterialTheme.colors.onSecondary
+                )
             }
         }
 
@@ -112,36 +166,92 @@ class FixtureFragment : Fragment() {
 
     @Composable
     fun Match(teamData: MatchData) {
-        Card(
-            shape = MaterialTheme.shapes.small,
-            modifier = Modifier
-                .padding(bottom = 6.dp, top = 6.dp)
-                .fillMaxWidth(),
-            elevation = 8.dp
+        Row(
+            horizontalArrangement = Arrangement.Center,
+            modifier = Modifier.fillMaxWidth()
         ) {
+            Card(
+                backgroundColor = MaterialTheme.colors.primary,
+                shape = RoundedCornerShape(10.dp),
+                modifier = Modifier
+                    .padding(
+                        all = 5.dp
+                    )
+            ) {
+                Row() {
+                    Text(
+                        text = teamData.teamHome,
+                        style = MaterialTheme.typography.body1,
+                        modifier =
+                        Modifier
+                            .padding(
+                                all = 10.dp
+                            )
+                            .alignByBaseline(),
+                        color = MaterialTheme.colors.onPrimary
+                    )
+                    Image(
+                        painterResource(id = R.drawable.ic_teamhome),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(width = 40.dp, height = 40.dp)
+                            .aspectRatio(1f)
+                            .padding(
+                                all = 5.dp
+                            )
+                            .alignByBaseline()
+                    )
+                }
+            }
+            Spacer(modifier = Modifier.width(20.dp))
             Text(
-                text = "${teamData.teamHome} vs ${teamData.teamAway}",
-                modifier = Modifier.padding(all = 6.dp)
+                text = "vs",
+                style = MaterialTheme.typography.h6,
+                modifier = Modifier.padding(
+                    all = 5.dp
+                ),
+                color = MaterialTheme.colors.onPrimary
             )
+            Card(
+                backgroundColor = MaterialTheme.colors.primary,
+                shape = RoundedCornerShape(10.dp),
+                modifier = Modifier
+                    .padding(
+                        all = 5.dp
+                    )
+                    .alignByBaseline()
+            ) {
+                Row() {
+                    Image(
+                        painterResource(id = R.drawable.ic_teamaway),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(width = 40.dp, height = 40.dp)
+                            .padding(
+                                all = 5.dp
+                            )
+                            .aspectRatio(1f)
+                    )
+                    Text(
+                        text = teamData.teamAway,
+                        style = MaterialTheme.typography.body1,
+                        modifier = Modifier
+                            .padding(
+                                all = 10.dp
+                            )
+                            .alignByBaseline(),
+                        color = MaterialTheme.colors.onPrimary
+                    )
+                }
+            }
         }
+
     }
 
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
     fun ListFixture() {
-        val resultModel by viewModel.fixtureState.observeAsState()
-        resultModel?.showSuccess?.consume()?.let { result ->
-            when (result) {
-                is Result.Error -> {
-
-                }
-                is Result.Success -> {
-                    val listFixture = result.data ?: mutableListOf()
-                    FixturePager(listFixture = listFixture)
-                }
-            }
-        }
-
+        FixturePager()
     }
 
     @Preview(showBackground = true)
