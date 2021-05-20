@@ -44,9 +44,7 @@ class Apifactory {
        // .baseUrl("https://2a209f42-d6ba-451f-90d4-44c94bba4f2b.mock.pstmn.io")
 
             //All Teams, size 21
-        .baseUrl("https://5095f9d2-675e-40ae-8bc2-a32bc9fd15dd.mock.pstmn.io")
-
-        //.baseUrl("https://98391657-efda-4af0-8973-33c99e1f12ed.mock.pstmn.io")
+        .baseUrl("https://98391657-efda-4af0-8973-33c99e1f12ed.mock.pstmn.io")
         .addConverterFactory(MoshiConverterFactory.create(moshi))
         .build()
 
