@@ -85,9 +85,16 @@ class FixtureFragment : Fragment() {
 
     @Composable
     fun CalculateFixture() {
-
+        val showProgress by viewModel.showProgressLiveData.observeAsState(initial = true)
+        if (showProgress) {
+            val animationSpec = remember { LottieAnimationSpec.RawRes(R.raw.fixture) }
+            LottieAnimation(
+                animationSpec,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
             ListFixture()
-
+        }
     }
 
     @OptIn(ExperimentalPagerApi::class)

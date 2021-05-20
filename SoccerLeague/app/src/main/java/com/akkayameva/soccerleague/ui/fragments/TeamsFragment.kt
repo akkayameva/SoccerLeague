@@ -110,7 +110,13 @@ class TeamsFragment : Fragment() {
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
     fun ListTeams(resultModel: ApiResultUIModel<List<Team>?>) {
-         if (!resultModel.showSuccess.consumed) {
+        if (resultModel.showProgress) {
+            val animationSpec = remember { LottieAnimationSpec.RawRes(R.raw.soccer) }
+            LottieAnimation(
+                animationSpec,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else if (!resultModel.showSuccess.consumed) {
 
             resultModel.showSuccess.consume()?.let { result ->
                 when (result) {
