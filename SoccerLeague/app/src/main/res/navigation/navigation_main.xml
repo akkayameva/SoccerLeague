@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/navigation_main.xml"
+    app:startDestination="@id/teamsFragment">
+
+    <action
+        android:id="@+id/action_to_fixtureFragment"
+        app:destination="@id/fixtureFragment" />
+
+    <fragment
+        android:id="@+id/teamsFragment"
+        android:name="com.akkayameva.soccerleague.ui.fragments.TeamsFragment"
+        android:label="ListFragment" />
+
+    <fragment
+        android:id="@+id/fixtureFragment"
+        android:name="com.akkayameva.soccerleague.ui.fragments.FixtureFragment"
+        android:label="FixtureFragment" />
+
+
+</navigation>
