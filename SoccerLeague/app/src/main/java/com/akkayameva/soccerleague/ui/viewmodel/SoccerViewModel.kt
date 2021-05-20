@@ -10,7 +10,7 @@ import com.akkayameva.soccerleague.data.repository.SoccerDBRepository
 import com.akkayameva.soccerleague.ui.base.ApiResultUIModel
 import com.akkayameva.soccerleague.ui.base.BaseViewModel
 import kotlinx.coroutines.Job
-
+import com.akkayameva.soccerleague.ui.base.Result
 import timber.log.Timber
 import java.util.*
 import kotlin.collections.ArrayList
