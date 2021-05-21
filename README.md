@@ -55,7 +55,7 @@ To manage league matches developed an sample android application.This applicatio
 
 ## Features
 
-A few of the things you can do with GitPoint:
+A few features of app
 
 * Fixtures can be created for the created team list.
 
