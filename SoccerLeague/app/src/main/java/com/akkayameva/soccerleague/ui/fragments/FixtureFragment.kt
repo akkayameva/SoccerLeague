@@ -313,7 +313,7 @@ class FixtureFragment : Fragment() {
         navController: NavHostController,
         items: List<BottomNavigationScreens>
     ) {
-        BottomNavigation(backgroundColor = MaterialTheme.colors.primaryVariant) {
+        BottomNavigation(backgroundColor = MaterialTheme.colors.surface) {
             val currentRoute = currentRoute(navController)
             items.forEach { screen ->
                 BottomNavigationItem(
@@ -363,6 +363,6 @@ sealed class BottomNavigationScreens(
     @StringRes val resourceId: Int,
     val iconResId: Int
 ) {
-    object Round1 : BottomNavigationScreens("Round1", R.string.round1, R.drawable.ic_round)
+    object Round1 : BottomNavigationScreens("Round1", R.string.round1, R.drawable.ic_round )
     object Round2 : BottomNavigationScreens("Round2", R.string.round2, R.drawable.ic_round)
 }

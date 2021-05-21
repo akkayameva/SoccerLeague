@@ -10,12 +10,14 @@ import androidx.compose.ui.graphics.Color
 val yellow200 = Color(0xffffeb46)
 val yellow400 = Color(0xffffc000)
 val yellow500 = Color(0xffffde03)
-val yellowDarkPrimary = Color(0xff242316)
+val yellowDarkPrimary = Color(0xFFFFC107)
 
-val blue200 = Color(0xff91a4fc)
+val white = Color(0xFFFAF7F6)
+val orange500 = Color(0xFFFF9900)
+
 val blue700 = Color(0xff0336ff)
 val blue800 = Color(0xff0035c9)
-val blueDarkPrimary = Color(0xff1c1d24)
+val blueDarkPrimary = Color(0xFFFFC107)
 
 private val YellowThemeLight = lightColors(
     primary = yellow500,
@@ -27,9 +29,10 @@ private val YellowThemeLight = lightColors(
 )
 
 private val YellowThemeDark = darkColors(
-    primary = yellow200,
-    secondary = blue200,
-    onSecondary = Color.Black,
+    primary = orange500,
+    secondary = Color.Black,
+    onPrimary = Color.White,
+    onSecondary = white,
     surface = yellowDarkPrimary
 )
 
