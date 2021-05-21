@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.annotation.StringRes
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
@@ -12,8 +13,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Done
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -23,10 +26,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.AlignmentLine
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.*
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieAnimationSpec
 import com.akkayameva.soccerleague.R
@@ -34,6 +40,7 @@ import com.akkayameva.soccerleague.data.db.Fixture
 import com.akkayameva.soccerleague.ui.base.ApiResultUIModel
 import com.akkayameva.soccerleague.ui.base.Result
 import com.akkayameva.soccerleague.ui.theme.SoccerLeagueTheme
+import com.akkayameva.soccerleague.ui.viewmodel.FixtureData
 
 import com.akkayameva.soccerleague.ui.viewmodel.MatchData
 import com.akkayameva.soccerleague.ui.viewmodel.SoccerViewModel
@@ -46,6 +53,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.koin.androidx.viewmodel.ext.android.sharedViewModel
+
+
 class FixtureFragment : Fragment() {
 
     val viewModel: SoccerViewModel by sharedViewModel()
@@ -61,7 +70,21 @@ class FixtureFragment : Fragment() {
                 SoccerLeagueTheme {
                     // A surface container using the 'background' color from the theme
                     Surface(color = MaterialTheme.colors.background) {
-                        CalculateFixture()
+
+                        val navController = rememberNavController()
+
+                        val bottomNavigationItems = listOf(
+                            BottomNavigationScreens.Round1,
+                            BottomNavigationScreens.Round2
+                        )
+
+                        Scaffold(
+                            bottomBar = {
+                                AppBottomNavigation(navController, bottomNavigationItems)
+                            },
+                        ) {
+                            BottomNavigationConfigurations(navController)
+                        }
                         lifecycleScope.launch(Dispatchers.IO) {
                             delay(1000)
                             withContext(Dispatchers.Main) {
@@ -84,24 +107,24 @@ class FixtureFragment : Fragment() {
     }
 
     @Composable
-    fun CalculateFixture() {
+    fun CalculateFixture(matchesMap: Map<Int, FixtureData>, offsetMargin: Int = 0) {
         val showProgress by viewModel.showProgressLiveData.observeAsState(initial = true)
         if (showProgress) {
-            val animationSpec = remember { LottieAnimationSpec.RawRes(R.raw.fixture) }
+            val animationSpec = remember { LottieAnimationSpec.RawRes(R.raw.soccer) }
             LottieAnimation(
                 animationSpec,
                 modifier = Modifier.fillMaxSize()
             )
         } else {
-            ListFixture()
+            FixturePager(matchesMap = matchesMap, offsetMargin = offsetMargin)
         }
     }
 
     @OptIn(ExperimentalPagerApi::class)
     @Composable
-    fun FixturePager() {
+    fun FixturePager(matchesMap: Map<Int, FixtureData>, offsetMargin: Int = 0) {
 
-        val pagerState = rememberPagerState(pageCount = viewModel.matchesMap.keys.size)
+        val pagerState = rememberPagerState(pageCount = matchesMap.keys.size)
         Column {
             ScrollableTabRow(
                 // Our selected tab is our current page
@@ -114,11 +137,11 @@ class FixtureFragment : Fragment() {
                 },
             ) {
                 // Add tabs for all of our pages
-                viewModel.matchesMap.keys.forEachIndexed { index, key ->
+                matchesMap.keys.forEachIndexed { index, key ->
                     Tab(
                         text = {
                             Text(
-                                "Week ${index + 1}",
+                                "Week ${key + 1}",
                                 color = Color.Black
                             )
                         },
@@ -132,16 +155,29 @@ class FixtureFragment : Fragment() {
                 }
             }
 
-            HorizontalPager(state = pagerState, Modifier.padding(all = 5.dp)) { pagerIndex ->
 
-                val matchesData = viewModel.matchesMap[pagerIndex]!!
-                Column(Modifier.fillMaxSize()) {
+            HorizontalPager(state = pagerState, Modifier.padding(all = 5.dp)) { pagerIndex ->
+                val matchesData = matchesMap[pagerIndex + offsetMargin]!!
+                Column {
                     LazyColumn(Modifier.weight(1f)) {
                         items(matchesData.listMatches?.toTypedArray()!!) { match ->
                             Match(teamData = match)
                         }
+                        item {
+                            Spacer(modifier = Modifier.padding(all = 10.dp))
+                        }
                     }
+
+                    Spacer(modifier = Modifier.padding(all = 5.dp))
                     PassingTeam("Passing Team:  ${matchesData.passingTeam}")
+                    Spacer(modifier = Modifier.padding(all = 30.dp))
+//                    item {
+//
+//                    }
+//
+//                    item {
+//
+//                    }
                 }
             }
         }
@@ -255,17 +291,78 @@ class FixtureFragment : Fragment() {
 
     }
 
-    @OptIn(ExperimentalFoundationApi::class)
     @Composable
-    fun ListFixture() {
-        FixturePager()
+    private fun BottomNavigationConfigurations(
+        navController: NavHostController
+    ) {
+        NavHost(navController, startDestination = BottomNavigationScreens.Round1.route) {
+            composable(BottomNavigationScreens.Round1.route) {
+                CalculateFixture(matchesMap = viewModel.matchesMap, offsetMargin = 0)
+            }
+            composable(BottomNavigationScreens.Round2.route) {
+                CalculateFixture(
+                    matchesMap = viewModel.matchesRound2Map,
+                    offsetMargin = viewModel.matchesMap.size
+                )
+            }
+        }
+    }
+
+    @Composable
+    private fun AppBottomNavigation(
+        navController: NavHostController,
+        items: List<BottomNavigationScreens>
+    ) {
+        BottomNavigation(backgroundColor = MaterialTheme.colors.primaryVariant) {
+            val currentRoute = currentRoute(navController)
+            items.forEach { screen ->
+                BottomNavigationItem(
+                    icon = {
+                        Image(
+                            painter = painterResource(id = screen.iconResId),
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    },
+                    label = { Text(stringResource(id = screen.resourceId)) },
+                    selected = currentRoute == screen.route,
+                    onClick = {
+                        // This if check gives us a "singleTop" behavior where we do not create a
+                        // second instance of the composable if we are already on that destination
+                        if (currentRoute != screen.route) {
+                            navController.navigate(
+                                route = screen.route, builder = {
+                                    this.launchSingleTop = true
+                                    this.popUpTo = navController.graph.startDestination
+                                }
+                            )
+                        }
+                    }
+                )
+            }
+        }
+    }
+
+    @Composable
+    private fun currentRoute(navController: NavHostController): String? {
+        val navBackStackEntry by navController.currentBackStackEntryAsState()
+        return navBackStackEntry?.arguments?.getString(KEY_ROUTE)
     }
 
     @Preview(showBackground = true)
     @Composable
     fun DefaultPreview() {
         SoccerLeagueTheme {
-            CalculateFixture()
+            CalculateFixture(matchesMap = viewModel.matchesMap)
         }
     }
+}
+
+sealed class BottomNavigationScreens(
+    val route: String,
+    @StringRes val resourceId: Int,
+    val iconResId: Int
+) {
+    object Round1 : BottomNavigationScreens("Round1", R.string.round1, R.drawable.ic_round)
+    object Round2 : BottomNavigationScreens("Round2", R.string.round2, R.drawable.ic_round)
 }

@@ -36,6 +36,7 @@ class SoccerViewModel(
     var listTeams: List<Team> = mutableListOf()
     var listTotalListTeams: MutableList<Team> = mutableListOf()
     var matchesMap: MutableMap<Int, FixtureData> = mutableMapOf()
+    var matchesRound2Map: MutableMap<Int, FixtureData> = mutableMapOf()
     val listPassingTeams = mutableListOf<String>()
     var fixtureList = ArrayList<Fixture>()
 
