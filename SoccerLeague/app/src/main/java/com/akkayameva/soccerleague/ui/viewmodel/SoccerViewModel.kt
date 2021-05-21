@@ -61,7 +61,7 @@ class SoccerViewModel(
             matchesMap[key] = localMatchesMap[key]!!
         }
         swappedMatches.keys.forEach { key ->
-            matchesMap[key] = swappedMatches[key]!!
+            matchesRound2Map[key] = swappedMatches[key]!!
         }
     }
 
@@ -255,4 +255,5 @@ data class FixtureData(
     var listMatches: List<MatchData>? = mutableListOf(),
     var passingTeam: String? = "",
     var round: Int? = 0
+
 )
