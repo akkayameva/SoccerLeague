@@ -110,7 +110,7 @@ class FixtureFragment : Fragment() {
     fun CalculateFixture(matchesMap: Map<Int, FixtureData>, offsetMargin: Int = 0) {
         val showProgress by viewModel.showProgressLiveData.observeAsState(initial = true)
         if (showProgress) {
-            val animationSpec = remember { LottieAnimationSpec.RawRes(R.raw.soccer) }
+            val animationSpec = remember { LottieAnimationSpec.RawRes(R.raw.fixture) }
             LottieAnimation(
                 animationSpec,
                 modifier = Modifier.fillMaxSize()
