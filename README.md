@@ -145,7 +145,7 @@ Timber for debug:
 ```xml
    implementation 'com.jakewharton.timber:timber:4.7.1'
 ```
-Koin for data injection:
+Koin for dependency injection:
 ```xml
    // Koin main features for Android (Scope,ViewModel ...)
     implementation "io.insert-koin:koin-android:$koin_version"
